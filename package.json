@@ -9,10 +9,7 @@
     "plugin",
     "console",
     "debugging",
-    "ai",
-    "anthropic",
-    "claude",
-    "cloudflare-workers"
+    "ai"
   ],
   "license": "MIT",
   "repository": {
