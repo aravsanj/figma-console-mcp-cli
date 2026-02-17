@@ -22,7 +22,6 @@ program
 
     try {
       await runSystemCheck();
-      const token = await promptForToken();
       const clients = await detectAndSelectClients();
 
       if (clients.length === 0) {
@@ -30,6 +29,7 @@ program
         return;
       }
 
+      const token = await promptForToken();
       const installMethod = await selectInstallMethod();
       const configured = await configureClients(clients, token, installMethod);
 
