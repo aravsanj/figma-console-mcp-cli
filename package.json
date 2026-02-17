@@ -1,11 +1,14 @@
 {
   "name": "figma-console-mcp-cli",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Interactive CLI to configure Figma Console MCP across AI coding clients",
   "type": "module",
   "bin": {
-    "figma-console-mcp-cli": "./dist/index.js"
+    "figma-console-mcp-cli": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
