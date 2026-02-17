@@ -1,6 +1,6 @@
 {
   "name": "figma-console-mcp-cli",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Interactive CLI to configure Figma Console MCP across AI coding clients",
   "keywords": [
     "figma-console-mcp",
