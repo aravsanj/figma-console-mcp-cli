@@ -1,14 +1,17 @@
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { input, select } from "@inquirer/prompts";
 import chalk from "chalk";
+import type { InstallMethod } from "./installMethod.js";
 import { getHomedir, getPlatform } from "../utils/platform.js";
 
 const REPO_URL = "https://github.com/southleft/figma-console-mcp.git";
 const DEFAULT_CLONE_DIR_NAME = "figma-console-mcp";
 
-export async function setupConnection(): Promise<"bridge" | "cdp"> {
+export async function setupConnection(
+  installMethod: InstallMethod,
+): Promise<"bridge" | "cdp"> {
   console.log(chalk.bold("\n🔌 Figma Connection Method\n"));
 
   const method = await select({
@@ -28,7 +31,11 @@ export async function setupConnection(): Promise<"bridge" | "cdp"> {
   });
 
   if (method === "bridge") {
-    await setupBridge();
+    const repoDir =
+      installMethod.type === "local"
+        ? dirname(dirname(installMethod.path))
+        : undefined;
+    await setupBridge(repoDir);
   } else {
     setupCDP();
   }
@@ -120,32 +127,45 @@ function showManualFallback(): void {
   );
 }
 
-async function setupBridge(): Promise<void> {
+async function setupBridge(existingRepoDir?: string): Promise<void> {
   console.log(chalk.bold("\n  Desktop Bridge Setup:\n"));
 
-  if (!isGitInstalled()) {
-    console.log(
-      chalk.yellow("  git is not installed or not on PATH."),
-    );
-    showManualFallback();
-    return;
-  }
-
-  const defaultDir = join(getHomedir(), DEFAULT_CLONE_DIR_NAME);
-
-  const targetDir = await input({
-    message: "Where should we clone figma-console-mcp?",
-    default: defaultDir,
-  });
-
   let manifestPath: string;
-  try {
-    manifestPath = cloneOrUpdateRepo(targetDir.trim());
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.log(chalk.red(`\n  Error: ${msg}`));
-    showManualFallback();
-    return;
+
+  if (existingRepoDir) {
+    manifestPath = join(existingRepoDir, "figma-desktop-bridge", "manifest.json");
+
+    if (!existsSync(manifestPath)) {
+      console.log(
+        chalk.red(`\n  Error: Bridge manifest not found at: ${manifestPath}`),
+      );
+      showManualFallback();
+      return;
+    }
+  } else {
+    if (!isGitInstalled()) {
+      console.log(
+        chalk.yellow("  git is not installed or not on PATH."),
+      );
+      showManualFallback();
+      return;
+    }
+
+    const defaultDir = join(getHomedir(), DEFAULT_CLONE_DIR_NAME);
+
+    const targetDir = await input({
+      message: "Where should we clone figma-console-mcp?",
+      default: defaultDir,
+    });
+
+    try {
+      manifestPath = cloneOrUpdateRepo(targetDir.trim());
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.log(chalk.red(`\n  Error: ${msg}`));
+      showManualFallback();
+      return;
+    }
   }
 
   console.log(chalk.bold("\n  Next steps:\n"));

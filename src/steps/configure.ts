@@ -2,12 +2,14 @@ import { execSync } from 'node:child_process';
 import chalk from 'chalk';
 import { select } from '@inquirer/prompts';
 import type { Client } from './clientDetect.js';
+import type { InstallMethod } from './installMethod.js';
 import { readJsonConfig, writeJsonConfig, mergeServerConfig } from '../utils/config.js';
 import { getPlatform } from '../utils/platform.js';
 
 export async function configureClients(
   clients: Client[],
   token: string,
+  method: InstallMethod = { type: 'npx' },
 ): Promise<Client[]> {
   console.log(chalk.bold('\n⚙️  Configuring MCP Server\n'));
 
@@ -16,13 +18,13 @@ export async function configureClients(
   for (const client of clients) {
     try {
       if (client.id === 'claude-code') {
-        const ok = await configureClaudeCode(token);
+        const ok = await configureClaudeCode(token, method);
         if (!ok) {
           console.log(chalk.yellow(`  ⊘ ${client.name} skipped`));
           continue;
         }
       } else if (client.configPath) {
-        configureJsonClient(client, token);
+        configureJsonClient(client, token, method);
       }
       configured.push(client);
       console.log(chalk.green(`  ✓ ${client.name} configured`));
@@ -62,7 +64,19 @@ export function isFigmaConsoleConfigured(): boolean {
   }
 }
 
-export async function configureClaudeCode(token: string): Promise<boolean> {
+function buildClaudeCodeCommand(method: InstallMethod): string {
+  if (method.type === 'local') {
+    return `node ${method.path}`;
+  }
+  return 'npx -y figma-console-mcp@latest';
+}
+
+export async function configureClaudeCode(
+  token: string,
+  method: InstallMethod = { type: 'npx' },
+): Promise<boolean> {
+  const serverCommand = buildClaudeCodeCommand(method);
+
   while (isClaudeRunning()) {
     console.log(chalk.yellow('\n  ⚠ Claude Code appears to be running.'));
     console.log(chalk.yellow('    It holds a lock that prevents `claude mcp add` from succeeding.'));
@@ -78,7 +92,7 @@ export async function configureClaudeCode(token: string): Promise<boolean> {
 
     if (action === 'skip') {
       console.log(chalk.dim('  Skipped. You can configure manually later:'));
-      console.log(chalk.dim(`  claude mcp add figma-console -s user -e FIGMA_ACCESS_TOKEN=<token> -e ENABLE_MCP_APPS=true -- npx -y figma-console-mcp@latest`));
+      console.log(chalk.dim(`  claude mcp add figma-console -s user -e FIGMA_ACCESS_TOKEN=<token> -e ENABLE_MCP_APPS=true -- ${serverCommand}`));
       return false;
     }
     // action === 'retry' → loop continues, re-checks isClaudeRunning()
@@ -89,15 +103,19 @@ export async function configureClaudeCode(token: string): Promise<boolean> {
   }
 
   execSync(
-    `claude mcp add figma-console -s user -e FIGMA_ACCESS_TOKEN=${token} -e ENABLE_MCP_APPS=true -- npx -y figma-console-mcp@latest`,
+    `claude mcp add figma-console -s user -e FIGMA_ACCESS_TOKEN=${token} -e ENABLE_MCP_APPS=true -- ${serverCommand}`,
     { stdio: 'ignore' },
   );
   return true;
 }
 
-export function configureJsonClient(client: Client, token: string): void {
+export function configureJsonClient(
+  client: Client,
+  token: string,
+  method: InstallMethod = { type: 'npx' },
+): void {
   const configPath = client.configPath!;
   const existing = readJsonConfig(configPath);
-  const merged = mergeServerConfig(existing, token);
+  const merged = mergeServerConfig(existing, token, method);
   writeJsonConfig(configPath, merged);
 }

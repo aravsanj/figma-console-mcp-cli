@@ -6,6 +6,7 @@ import { runSystemCheck } from "./steps/systemCheck.js";
 import { promptForToken } from "./steps/auth.js";
 import { detectAndSelectClients } from "./steps/clientDetect.js";
 import { configureClients } from "./steps/configure.js";
+import { selectInstallMethod } from "./steps/installMethod.js";
 import { setupConnection } from "./steps/connection.js";
 import { runHealthCheck } from "./steps/healthCheck.js";
 import { runDoctor } from "./steps/doctor.js";
@@ -29,14 +30,15 @@ program
         return;
       }
 
-      const configured = await configureClients(clients, token);
+      const installMethod = await selectInstallMethod();
+      const configured = await configureClients(clients, token, installMethod);
 
       if (configured.length === 0) {
         console.log(chalk.yellow("\nNo clients were configured. Exiting.\n"));
         return;
       }
 
-      const method = await setupConnection();
+      const method = await setupConnection(installMethod);
       await runHealthCheck(configured, method);
     } catch (err) {
       if ((err as { name?: string }).name === "ExitPromptError") {

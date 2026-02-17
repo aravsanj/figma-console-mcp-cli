@@ -2,13 +2,14 @@ import { execSync } from 'node:child_process';
 import { select, checkbox } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { getClients, type Client } from './clientDetect.js';
-import { readJsonConfig, writeJsonConfig } from '../utils/config.js';
+import { readJsonConfig, writeJsonConfig, detectInstallMethodFromConfig } from '../utils/config.js';
 import {
   configureClaudeCode,
   configureJsonClient,
   isFigmaConsoleConfigured,
 } from './configure.js';
 import { promptForToken } from './auth.js';
+import { selectInstallMethod, type InstallMethod } from './installMethod.js';
 
 interface ScanResult {
   client: Client;
@@ -82,10 +83,14 @@ async function updateToken(results: ScanResult[]): Promise<void> {
 
   for (const { client } of configured) {
     try {
+      const method: InstallMethod = client.configPath
+        ? detectInstallMethodFromConfig(client.configPath)
+        : { type: 'npx' };
+
       if (client.id === 'claude-code') {
-        await configureClaudeCode(token);
+        await configureClaudeCode(token, method);
       } else if (client.configPath) {
-        configureJsonClient(client, token);
+        configureJsonClient(client, token, method);
       }
       console.log(chalk.green(`  ✓ ${client.name} updated`));
     } catch (err) {
@@ -163,13 +168,15 @@ async function addIntegrations(results: ScanResult[]): Promise<void> {
     token = await promptForToken();
   }
 
+  const method = await selectInstallMethod();
+
   for (const id of toAdd) {
     const result = unconfigured.find((r) => r.client.id === id)!;
     try {
       if (id === 'claude-code') {
-        await configureClaudeCode(token);
+        await configureClaudeCode(token, method);
       } else if (result.client.configPath) {
-        configureJsonClient(result.client, token);
+        configureJsonClient(result.client, token, method);
       }
       console.log(chalk.green(`  ✓ ${result.client.name} configured`));
     } catch (err) {
