@@ -20,7 +20,7 @@ function isCommandAvailable(cmd: string): boolean {
   }
 }
 
-function getClients(): Client[] {
+export function getClients(): Client[] {
   const platform = getPlatform();
   const appData = getAppDataPath();
 

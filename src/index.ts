@@ -8,6 +8,7 @@ import { detectAndSelectClients } from "./steps/clientDetect.js";
 import { configureClients } from "./steps/configure.js";
 import { setupConnection } from "./steps/connection.js";
 import { runHealthCheck } from "./steps/healthCheck.js";
+import { runDoctor } from "./steps/doctor.js";
 
 const program = new Command();
 
@@ -40,6 +41,25 @@ program
     } catch (err) {
       if ((err as { name?: string }).name === "ExitPromptError") {
         console.log(chalk.dim("\nSetup cancelled.\n"));
+        return;
+      }
+      console.error(
+        chalk.red(`\nError: ${err instanceof Error ? err.message : err}\n`),
+      );
+      process.exit(1);
+    }
+  });
+
+program
+  .command("doctor")
+  .description("Diagnose and manage Figma Console MCP integrations")
+  .action(async () => {
+    console.log(chalk.bold.cyan("\n  Figma Console MCP — Doctor\n"));
+    try {
+      await runDoctor();
+    } catch (err) {
+      if ((err as { name?: string }).name === "ExitPromptError") {
+        console.log(chalk.dim("\nDoctor cancelled.\n"));
         return;
       }
       console.error(

@@ -50,7 +50,7 @@ function isClaudeRunning(): boolean {
   }
 }
 
-function isFigmaConsoleConfigured(): boolean {
+export function isFigmaConsoleConfigured(): boolean {
   try {
     const output = execSync('claude mcp list', {
       encoding: 'utf-8',
@@ -62,7 +62,7 @@ function isFigmaConsoleConfigured(): boolean {
   }
 }
 
-async function configureClaudeCode(token: string): Promise<boolean> {
+export async function configureClaudeCode(token: string): Promise<boolean> {
   while (isClaudeRunning()) {
     console.log(chalk.yellow('\n  ⚠ Claude Code appears to be running.'));
     console.log(chalk.yellow('    It holds a lock that prevents `claude mcp add` from succeeding.'));
@@ -95,7 +95,7 @@ async function configureClaudeCode(token: string): Promise<boolean> {
   return true;
 }
 
-function configureJsonClient(client: Client, token: string): void {
+export function configureJsonClient(client: Client, token: string): void {
   const configPath = client.configPath!;
   const existing = readJsonConfig(configPath);
   const merged = mergeServerConfig(existing, token);

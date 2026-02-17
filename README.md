@@ -19,6 +19,20 @@ The wizard walks you through:
 5. **Connection setup** — choose Bridge (plugin) or CDP (debug port) and get setup instructions
 6. **Health check** — verifies the connection to Figma is working
 
+## Doctor Command
+
+Already set up? Use `doctor` to audit and manage your integrations:
+
+```bash
+npx figma-console-mcp-cli doctor
+```
+
+The doctor command scans all supported clients and shows their integration status, then lets you:
+
+- **Update** your Figma token across all configured clients
+- **Remove** the integration from selected clients
+- **Add** the integration to newly-installed clients
+
 ## Supported Clients
 
 - Claude Code
