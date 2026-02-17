@@ -2,6 +2,27 @@
   "name": "figma-console-mcp-cli",
   "version": "0.2.0",
   "description": "Interactive CLI to configure Figma Console MCP across AI coding clients",
+  "keywords": [
+    "figma-console-mcp",
+    "mcp",
+    "figma",
+    "plugin",
+    "console",
+    "debugging",
+    "ai",
+    "anthropic",
+    "claude",
+    "cloudflare-workers"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aravsanj/figma-console-mcp-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aravsanj/figma-console-mcp-cli/issues"
+  },
+  "homepage": "https://github.com/aravsanj/figma-console-mcp-cli#readme",
   "type": "module",
   "bin": {
     "figma-console-mcp-cli": "dist/index.js"
