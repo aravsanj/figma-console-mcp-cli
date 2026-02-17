@@ -34,5 +34,14 @@ export function getAppDataPath(): string {
 }
 
 export function getLocalAppDataPath(): string {
-  return process.env.LOCALAPPDATA || path.join(getHomedir(), 'AppData', 'Local');
+  return (
+    process.env.LOCALAPPDATA || path.join(getHomedir(), 'AppData', 'Local')
+  );
+}
+
+export function expandPath(inputPath: string): string {
+  if (inputPath.startsWith('~')) {
+    return path.join(getHomedir(), inputPath.slice(1));
+  }
+  return inputPath;
 }

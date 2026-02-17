@@ -11,7 +11,10 @@ export function readJsonConfig(filePath: string): Record<string, unknown> {
   }
 }
 
-export function writeJsonConfig(filePath: string, data: Record<string, unknown>): void {
+export function writeJsonConfig(
+  filePath: string,
+  data: Record<string, unknown>,
+): void {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -19,7 +22,10 @@ export function writeJsonConfig(filePath: string, data: Record<string, unknown>)
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
 }
 
-function getServerCommand(method: InstallMethod): { command: string; args: string[] } {
+function getServerCommand(method: InstallMethod): {
+  command: string;
+  args: string[];
+} {
   if (method.type === 'local') {
     return { command: 'node', args: [method.path] };
   }
@@ -49,10 +55,14 @@ export function mergeServerConfig(
   };
 }
 
-export function detectInstallMethodFromConfig(configPath: string): InstallMethod {
+export function detectInstallMethodFromConfig(
+  configPath: string,
+): InstallMethod {
   const config = readJsonConfig(configPath);
   const mcpServers = config.mcpServers as Record<string, unknown> | undefined;
-  const figmaConsole = mcpServers?.['figma-console'] as Record<string, unknown> | undefined;
+  const figmaConsole = mcpServers?.['figma-console'] as
+    | Record<string, unknown>
+    | undefined;
 
   if (figmaConsole?.command === 'node') {
     const args = figmaConsole.args as string[] | undefined;

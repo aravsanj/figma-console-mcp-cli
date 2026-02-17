@@ -1,8 +1,8 @@
-import chalk from "chalk";
-import { createServer } from "node:http";
-import { createHash } from "node:crypto";
-import { confirm, select } from "@inquirer/prompts";
-import type { Client } from "./clientDetect.js";
+import chalk from 'chalk';
+import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
+import { confirm, select } from '@inquirer/prompts';
+import type { Client } from './clientDetect.js';
 
 const BRIDGE_PORTS = [
   9223, 9224, 9225, 9226, 9227, 9228, 9229, 9230, 9231, 9232,
@@ -10,15 +10,15 @@ const BRIDGE_PORTS = [
 
 const BRIDGE_TIMEOUT_MS = 60_000;
 
-type BridgeResult = "connected" | "timeout" | "cancelled";
+type BridgeResult = 'connected' | 'timeout' | 'cancelled';
 
 function tryListen(
   server: ReturnType<typeof createServer>,
   port: number,
 ): Promise<boolean> {
   return new Promise((resolve) => {
-    server.once("error", () => resolve(false));
-    server.listen(port, "127.0.0.1", () => resolve(true));
+    server.once('error', () => resolve(false));
+    server.listen(port, '127.0.0.1', () => resolve(true));
   });
 }
 
@@ -47,10 +47,10 @@ async function waitForBridgeWithCancel(): Promise<BridgeResult> {
   }
 
   if (!bound) {
-    return "connected";
+    return 'connected';
   }
 
-  const spinnerMessage = "Waiting for Bridge plugin... (press Escape to cancel)";
+  const spinnerMessage = `Waiting for Bridge plugin... ${chalk.dim('(press Escape to cancel)')}`;
 
   return new Promise<BridgeResult>((resolve) => {
     let resolved = false;
@@ -60,15 +60,15 @@ async function waitForBridgeWithCancel(): Promise<BridgeResult> {
       clearInterval(spinnerInterval);
       clearTimeout(timer);
       // Clear spinner line
-      process.stdout.write(`\r${" ".repeat(spinnerMessage.length + 6)}\r`);
+      process.stdout.write(`\r${' '.repeat(spinnerMessage.length + 6)}\r`);
       server.close();
       restoreStdin();
-      process.removeListener("exit", restoreStdin);
+      process.removeListener('exit', restoreStdin);
     };
 
     // Spinner
     let frame = 0;
-    const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+    const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
     const spinnerInterval = setInterval(() => {
       const f = SPINNER_FRAMES[frame % SPINNER_FRAMES.length]!;
       process.stdout.write(`\r  ${chalk.cyan(f)} ${spinnerMessage}`);
@@ -78,49 +78,49 @@ async function waitForBridgeWithCancel(): Promise<BridgeResult> {
     // Timeout
     const timer = setTimeout(() => {
       cleanup();
-      resolve("timeout");
+      resolve('timeout');
     }, BRIDGE_TIMEOUT_MS);
 
     // Escape listener
     if (process.stdin.isTTY) {
       process.stdin.setRawMode(true);
       process.stdin.resume();
-      process.stdin.setEncoding("utf8");
-      process.on("exit", restoreStdin);
+      process.stdin.setEncoding('utf8');
+      process.on('exit', restoreStdin);
 
       const onData = (data: string): void => {
-        if (data === "\x1b") {
-          process.stdin.removeListener("data", onData);
+        if (data === '\x1b') {
+          process.stdin.removeListener('data', onData);
           cleanup();
-          resolve("cancelled");
+          resolve('cancelled');
         }
       };
-      process.stdin.on("data", onData);
+      process.stdin.on('data', onData);
 
       // Remove data listener when server closes from other paths
-      server.on("close", () => {
-        process.stdin.removeListener("data", onData);
+      server.on('close', () => {
+        process.stdin.removeListener('data', onData);
       });
     }
 
     // WebSocket upgrade
-    server.on("upgrade", (req, socket) => {
-      const key = req.headers["sec-websocket-key"];
-      if (typeof key === "string") {
-        const accept = createHash("sha1")
-          .update(key + "258EAFA5-E914-47DA-95CA-5AB5E34B13E5")
-          .digest("base64");
+    server.on('upgrade', (req, socket) => {
+      const key = req.headers['sec-websocket-key'];
+      if (typeof key === 'string') {
+        const accept = createHash('sha1')
+          .update(key + '258EAFA5-E914-47DA-95CA-5AB5E34B13E5')
+          .digest('base64');
         socket.write(
-          "HTTP/1.1 101 Switching Protocols\r\n" +
-            "Upgrade: websocket\r\n" +
-            "Connection: Upgrade\r\n" +
+          'HTTP/1.1 101 Switching Protocols\r\n' +
+            'Upgrade: websocket\r\n' +
+            'Connection: Upgrade\r\n' +
             `Sec-WebSocket-Accept: ${accept}\r\n` +
-            "\r\n",
+            '\r\n',
         );
       }
       socket.destroy();
       cleanup();
-      resolve("connected");
+      resolve('connected');
     });
   });
 }
@@ -129,7 +129,7 @@ async function checkCdp(): Promise<boolean> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch("http://localhost:9222", {
+    const res = await fetch('http://localhost:9222', {
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -139,7 +139,7 @@ async function checkCdp(): Promise<boolean> {
   }
 }
 
-const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 async function withSpinner<T>(
   message: string,
@@ -154,7 +154,7 @@ async function withSpinner<T>(
 
   try {
     const result = await fn();
-    process.stdout.write(`\r${" ".repeat(message.length + 6)}\r`);
+    process.stdout.write(`\r${' '.repeat(message.length + 6)}\r`);
     return result;
   } finally {
     clearInterval(id);
@@ -163,21 +163,21 @@ async function withSpinner<T>(
 
 export async function runHealthCheck(
   clients: Client[],
-  method: "bridge" | "cdp",
+  method: 'bridge' | 'cdp',
 ): Promise<void> {
-  console.log(chalk.bold("\n🏥 Health Check\n"));
+  console.log(chalk.bold('\n🏥 Health Check\n'));
 
-  if (method === "cdp") {
+  if (method === 'cdp') {
     const ready = await confirm({
       message:
-        "Have you relaunched Figma with the --remote-debugging-port flag?",
+        'Have you relaunched Figma with the --remote-debugging-port flag?',
       default: true,
     });
 
     if (!ready) {
       console.log(
         chalk.yellow(
-          "\n  Complete the setup steps above, then run the wizard again.\n",
+          '\n  Complete the setup steps above, then run the wizard again.\n',
         ),
       );
       return;
@@ -187,97 +187,97 @@ export async function runHealthCheck(
   let healthy = false;
 
   while (!healthy) {
-    if (method === "cdp") {
-      healthy = await withSpinner("Checking CDP endpoint...", checkCdp);
+    if (method === 'cdp') {
+      healthy = await withSpinner('Checking CDP endpoint...', checkCdp);
       if (healthy) {
         console.log(
-          chalk.green("  ✓ Figma CDP endpoint reachable (localhost:9222)"),
+          chalk.green('  ✓ Figma CDP endpoint reachable (localhost:9222)'),
         );
       } else {
         console.log(
           chalk.yellow(
-            "  ⚠ Figma CDP endpoint not reachable — launch Figma with the connection method you chose",
+            '  ⚠ Figma CDP endpoint not reachable — launch Figma with the connection method you chose',
           ),
         );
       }
 
       if (!healthy) {
         const action = await select({
-          message: "What would you like to do?",
+          message: 'What would you like to do?',
           choices: [
-            { name: "Retry health check", value: "retry" as const },
-            { name: "Exit setup", value: "exit" as const },
+            { name: 'Retry health check', value: 'retry' as const },
+            { name: 'Exit setup', value: 'exit' as const },
           ],
         });
 
-        if (action === "exit") {
+        if (action === 'exit') {
           console.log(
             chalk.yellow(
-              "\n  Setup incomplete. Run the wizard again when ready.\n",
+              '\n  Setup incomplete. Run the wizard again when ready.\n',
             ),
           );
           return;
         }
-        console.log("");
+        console.log('');
       }
     } else {
       console.log(
         chalk.cyan(
-          "\n  → Start (or restart) the Figma Console Bridge plugin in Figma now.\n",
+          '\n  → Start (or restart) the Figma Console Bridge plugin in Figma now.\n',
         ),
       );
 
       const result = await waitForBridgeWithCancel();
 
-      if (result === "connected") {
-        console.log(chalk.green("  ✓ Bridge plugin connected"));
+      if (result === 'connected') {
+        console.log(chalk.green('  ✓ Bridge plugin connected'));
         healthy = true;
-      } else if (result === "cancelled") {
+      } else if (result === 'cancelled') {
         console.log(
           chalk.yellow(
-            "\n  Setup cancelled. Run the wizard again when ready.\n",
+            '\n  Setup cancelled. Run the wizard again when ready.\n',
           ),
         );
         return;
       } else {
         console.log(
           chalk.yellow(
-            "  ⚠ Bridge plugin not detected — make sure you started/restarted the plugin after seeing this prompt",
+            '  ⚠ Bridge plugin not detected — make sure you started/restarted the plugin after seeing this prompt',
           ),
         );
 
         const action = await select({
-          message: "What would you like to do?",
+          message: 'What would you like to do?',
           choices: [
-            { name: "Retry health check", value: "retry" as const },
-            { name: "Exit setup", value: "exit" as const },
+            { name: 'Retry health check', value: 'retry' as const },
+            { name: 'Exit setup', value: 'exit' as const },
           ],
         });
 
-        if (action === "exit") {
+        if (action === 'exit') {
           console.log(
             chalk.yellow(
-              "\n  Setup incomplete. Run the wizard again when ready.\n",
+              '\n  Setup incomplete. Run the wizard again when ready.\n',
             ),
           );
           return;
         }
-        console.log("");
+        console.log('');
       }
     }
   }
 
   // Success dashboard
-  console.log(chalk.bold.green("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-  console.log(chalk.bold.green("  ✅ Setup Complete!"));
-  console.log(chalk.bold.green("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"));
+  console.log(chalk.bold.green('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
+  console.log(chalk.bold.green('  ✅ Setup Complete!'));
+  console.log(chalk.bold.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'));
 
-  console.log(chalk.bold("  Configured clients:"));
+  console.log(chalk.bold('  Configured clients:'));
   for (const c of clients) {
     console.log(chalk.green(`    • ${c.name}`));
   }
 
-  console.log(chalk.bold("\n  Try these prompts in your AI client:\n"));
+  console.log(chalk.bold('\n  Try these prompts in your AI client:\n'));
   console.log(chalk.dim('    "Take a screenshot of the current Figma file"'));
   console.log(chalk.dim('    "List all components in the design system"'));
   console.log(

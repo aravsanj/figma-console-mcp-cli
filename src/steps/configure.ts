@@ -3,7 +3,11 @@ import chalk from 'chalk';
 import { select } from '@inquirer/prompts';
 import type { Client } from './clientDetect.js';
 import type { InstallMethod } from './installMethod.js';
-import { readJsonConfig, writeJsonConfig, mergeServerConfig } from '../utils/config.js';
+import {
+  readJsonConfig,
+  writeJsonConfig,
+  mergeServerConfig,
+} from '../utils/config.js';
 import { getPlatform } from '../utils/platform.js';
 
 export async function configureClients(
@@ -39,10 +43,14 @@ export async function configureClients(
 
 function isClaudeRunning(): boolean {
   try {
-    const cmd = getPlatform() === 'windows'
-      ? 'tasklist /FI "IMAGENAME eq claude.exe" /NH'
-      : 'pgrep -x claude';
-    const output = execSync(cmd, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const cmd =
+      getPlatform() === 'windows'
+        ? 'tasklist /FI "IMAGENAME eq claude.exe" /NH'
+        : 'pgrep -x claude';
+    const output = execSync(cmd, {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
     if (getPlatform() === 'windows') {
       return output.includes('claude.exe');
     }
@@ -79,20 +87,30 @@ export async function configureClaudeCode(
 
   while (isClaudeRunning()) {
     console.log(chalk.yellow('\n  ⚠ Claude Code appears to be running.'));
-    console.log(chalk.yellow('    It holds a lock that prevents `claude mcp add` from succeeding.'));
-    console.log(chalk.yellow('    Please quit Claude Code before continuing.\n'));
+    console.log(
+      chalk.yellow(
+        '    It holds a lock that prevents `claude mcp add` from succeeding.',
+      ),
+    );
+    console.log(
+      chalk.yellow('    Please quit Claude Code before continuing.\n'),
+    );
 
     const action = await select({
       message: 'What would you like to do?',
       choices: [
-        { name: 'I\'ve closed Claude Code — retry', value: 'retry' as const },
+        { name: "I've closed Claude Code — retry", value: 'retry' as const },
         { name: 'Skip Claude Code setup', value: 'skip' as const },
       ],
     });
 
     if (action === 'skip') {
       console.log(chalk.dim('  Skipped. You can configure manually later:'));
-      console.log(chalk.dim(`  claude mcp add figma-console -s user -e FIGMA_ACCESS_TOKEN=<token> -e ENABLE_MCP_APPS=true -- ${serverCommand}`));
+      console.log(
+        chalk.dim(
+          `  claude mcp add figma-console -s user -e FIGMA_ACCESS_TOKEN=<token> -e ENABLE_MCP_APPS=true -- ${serverCommand}`,
+        ),
+      );
       return false;
     }
     // action === 'retry' → loop continues, re-checks isClaudeRunning()

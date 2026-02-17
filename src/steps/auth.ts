@@ -11,15 +11,24 @@ export async function promptForToken(): Promise<string> {
 
   while (true) {
     const token = await password({
-      message: 'Paste your Figma Personal Access Token:',
+      message:
+        'Paste your Figma Personal Access Token (or leave empty to exit):',
       mask: '*',
     });
+
+    if (!token) {
+      const error = new Error('Setup cancelled');
+      error.name = 'ExitPromptError';
+      throw error;
+    }
 
     if (token.startsWith('figd_')) {
       console.log(chalk.green('  ✓ Token accepted'));
       return token;
     }
 
-    console.log(chalk.red('  ✗ Invalid token — must start with "figd_". Try again.\n'));
+    console.log(
+      chalk.red('  ✗ Invalid token — must start with "figd_". Try again.\n'),
+    );
   }
 }

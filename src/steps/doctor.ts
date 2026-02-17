@@ -2,7 +2,11 @@ import { execSync } from 'node:child_process';
 import { select, checkbox } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { getClients, type Client } from './clientDetect.js';
-import { readJsonConfig, writeJsonConfig, detectInstallMethodFromConfig } from '../utils/config.js';
+import {
+  readJsonConfig,
+  writeJsonConfig,
+  detectInstallMethodFromConfig,
+} from '../utils/config.js';
 import {
   configureClaudeCode,
   configureJsonClient,
@@ -22,8 +26,8 @@ function maskToken(token: string): string {
   return `${token.slice(0, 5)}****${token.slice(-4)}`;
 }
 
-function scanClients(): ScanResult[] {
-  const clients = getClients();
+async function scanClients(): Promise<ScanResult[]> {
+  const clients = await getClients();
   return clients.map((client) => {
     if (client.id === 'claude-code') {
       return {
@@ -39,7 +43,9 @@ function scanClients(): ScanResult[] {
 
     const config = readJsonConfig(client.configPath);
     const mcpServers = config.mcpServers as Record<string, unknown> | undefined;
-    const figmaConsole = mcpServers?.['figma-console'] as Record<string, unknown> | undefined;
+    const figmaConsole = mcpServers?.['figma-console'] as
+      | Record<string, unknown>
+      | undefined;
 
     if (!figmaConsole) {
       return { client, configured: false, token: null };
@@ -120,7 +126,9 @@ async function removeIntegrations(results: ScanResult[]): Promise<void> {
     const result = configured.find((r) => r.client.id === id)!;
     try {
       if (id === 'claude-code') {
-        execSync('claude mcp remove figma-console -s user', { stdio: 'ignore' });
+        execSync('claude mcp remove figma-console -s user', {
+          stdio: 'ignore',
+        });
       } else if (result.client.configPath) {
         const config = readJsonConfig(result.client.configPath);
         const mcpServers = (config.mcpServers as Record<string, unknown>) ?? {};
@@ -137,7 +145,9 @@ async function removeIntegrations(results: ScanResult[]): Promise<void> {
 }
 
 async function addIntegrations(results: ScanResult[]): Promise<void> {
-  const unconfigured = results.filter((r) => r.client.detected && !r.configured);
+  const unconfigured = results.filter(
+    (r) => r.client.detected && !r.configured,
+  );
 
   const toAdd = await checkbox({
     message: 'Select clients to add integration to:',
@@ -188,11 +198,13 @@ async function addIntegrations(results: ScanResult[]): Promise<void> {
 
 export async function runDoctor(): Promise<void> {
   while (true) {
-    const results = scanClients();
+    const results = await scanClients();
     displayResults(results);
 
     const hasConfigured = results.some((r) => r.configured);
-    const hasUnconfigured = results.some((r) => r.client.detected && !r.configured);
+    const hasUnconfigured = results.some(
+      (r) => r.client.detected && !r.configured,
+    );
 
     type Action = 'update' | 'remove' | 'add' | 'done';
     const choices: { name: string; value: Action }[] = [];
@@ -206,7 +218,10 @@ export async function runDoctor(): Promise<void> {
     }
     choices.push({ name: 'Done', value: 'done' });
 
-    const action = await select({ message: 'What would you like to do?', choices });
+    const action = await select({
+      message: 'What would you like to do?',
+      choices,
+    });
 
     if (action === 'done') break;
 

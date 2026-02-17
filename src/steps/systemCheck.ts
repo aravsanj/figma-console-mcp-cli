@@ -31,6 +31,10 @@ export async function runSystemCheck(): Promise<void> {
   if (figmaInstalled) {
     console.log(chalk.green('  ✓ Figma Desktop detected'));
   } else {
-    console.log(chalk.yellow('  ⚠ Figma Desktop not found — install from https://figma.com/downloads'));
+    console.log(
+      chalk.yellow(
+        '  ⚠ Figma Desktop not found — install from https://figma.com/downloads',
+      ),
+    );
   }
 }
