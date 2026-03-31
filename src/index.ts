@@ -38,8 +38,8 @@ program
         return;
       }
 
-      const method = await setupConnection(installMethod);
-      await runHealthCheck(configured, method);
+      await setupConnection(installMethod);
+      await runHealthCheck(configured);
     } catch (err) {
       if ((err as { name?: string }).name === 'ExitPromptError') {
         console.log(chalk.dim('\nSetup cancelled.\n'));

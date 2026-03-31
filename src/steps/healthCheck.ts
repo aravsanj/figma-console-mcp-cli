@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
-import { confirm, select } from '@inquirer/prompts';
+import { select } from '@inquirer/prompts';
 import type { Client } from './clientDetect.js';
 
 const BRIDGE_PORTS = [
@@ -125,20 +125,6 @@ async function waitForBridgeWithCancel(): Promise<BridgeResult> {
   });
 }
 
-async function checkCdp(): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch('http://localhost:9222', {
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    return res.ok || res.status > 0;
-  } catch {
-    return false;
-  }
-}
-
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 async function withSpinner<T>(
@@ -163,107 +149,54 @@ async function withSpinner<T>(
 
 export async function runHealthCheck(
   clients: Client[],
-  method: 'bridge' | 'cdp',
 ): Promise<void> {
   console.log(chalk.bold('\n🏥 Health Check\n'));
-
-  if (method === 'cdp') {
-    const ready = await confirm({
-      message:
-        'Have you relaunched Figma with the --remote-debugging-port flag?',
-      default: true,
-    });
-
-    if (!ready) {
-      console.log(
-        chalk.yellow(
-          '\n  Complete the setup steps above, then run the wizard again.\n',
-        ),
-      );
-      return;
-    }
-  }
 
   let healthy = false;
 
   while (!healthy) {
-    if (method === 'cdp') {
-      healthy = await withSpinner('Checking CDP endpoint...', checkCdp);
-      if (healthy) {
-        console.log(
-          chalk.green('  ✓ Figma CDP endpoint reachable (localhost:9222)'),
-        );
-      } else {
-        console.log(
-          chalk.yellow(
-            '  ⚠ Figma CDP endpoint not reachable — launch Figma with the connection method you chose',
-          ),
-        );
-      }
+    console.log(
+      chalk.cyan(
+        '\n  → Start (or restart) the Figma Console Bridge plugin in Figma now.\n',
+      ),
+    );
 
-      if (!healthy) {
-        const action = await select({
-          message: 'What would you like to do?',
-          choices: [
-            { name: 'Retry health check', value: 'retry' as const },
-            { name: 'Exit setup', value: 'exit' as const },
-          ],
-        });
+    const result = await waitForBridgeWithCancel();
 
-        if (action === 'exit') {
-          console.log(
-            chalk.yellow(
-              '\n  Setup incomplete. Run the wizard again when ready.\n',
-            ),
-          );
-          return;
-        }
-        console.log('');
-      }
+    if (result === 'connected') {
+      console.log(chalk.green('  ✓ Bridge plugin connected'));
+      healthy = true;
+    } else if (result === 'cancelled') {
+      console.log(
+        chalk.yellow(
+          '\n  Setup cancelled. Run the wizard again when ready.\n',
+        ),
+      );
+      return;
     } else {
       console.log(
-        chalk.cyan(
-          '\n  → Start (or restart) the Figma Console Bridge plugin in Figma now.\n',
+        chalk.yellow(
+          '  ⚠ Bridge plugin not detected — make sure you started/restarted the plugin after seeing this prompt',
         ),
       );
 
-      const result = await waitForBridgeWithCancel();
+      const action = await select({
+        message: 'What would you like to do?',
+        choices: [
+          { name: 'Retry health check', value: 'retry' as const },
+          { name: 'Exit setup', value: 'exit' as const },
+        ],
+      });
 
-      if (result === 'connected') {
-        console.log(chalk.green('  ✓ Bridge plugin connected'));
-        healthy = true;
-      } else if (result === 'cancelled') {
+      if (action === 'exit') {
         console.log(
           chalk.yellow(
-            '\n  Setup cancelled. Run the wizard again when ready.\n',
+            '\n  Setup incomplete. Run the wizard again when ready.\n',
           ),
         );
         return;
-      } else {
-        console.log(
-          chalk.yellow(
-            '  ⚠ Bridge plugin not detected — make sure you started/restarted the plugin after seeing this prompt',
-          ),
-        );
-
-        const action = await select({
-          message: 'What would you like to do?',
-          choices: [
-            { name: 'Retry health check', value: 'retry' as const },
-            { name: 'Exit setup', value: 'exit' as const },
-          ],
-        });
-
-        if (action === 'exit') {
-          console.log(
-            chalk.yellow(
-              '\n  Setup incomplete. Run the wizard again when ready.\n',
-            ),
-          );
-          return;
-        }
-        console.log('');
       }
+      console.log('');
     }
   }
 

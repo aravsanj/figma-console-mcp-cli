@@ -88,10 +88,12 @@ async function runInstallAndBuild(dir: string): Promise<void> {
   );
 
   console.log(chalk.dim('  Building…'));
-  await runCommandWithSpinner('npm', ['run', 'build'], 'Building project...', {
-    cwd: dir,
-    timeout: 60_000,
-  });
+  await runCommandWithSpinner(
+    'npm',
+    ['run', 'build:local'],
+    'Building project...',
+    { cwd: dir, timeout: 60_000 },
+  );
 }
 
 export async function selectInstallMethod(): Promise<InstallMethod> {
