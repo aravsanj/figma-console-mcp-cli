@@ -16,7 +16,7 @@ The wizard walks you through:
 2. **Authentication** — prompts for your Figma Personal Access Token
 3. **Client detection** — finds installed AI clients and lets you pick which to configure
 4. **Configuration** — injects the MCP server config into each client
-5. **Connection setup** — choose Bridge (plugin) or CDP (debug port) and get setup instructions
+5. **Connection setup** — install the Bridge plugin and get setup instructions
 6. **Health check** — verifies the connection to Figma is working
 
 ## Doctor Command
@@ -40,10 +40,9 @@ The doctor command scans all supported clients and shows their integration statu
 - Cursor
 - Windsurf
 
-## Connection Methods
+## Connection Method
 
-- **Desktop Bridge Plugin** (recommended) — install a Figma plugin, no restart needed
-- **CDP Debug Mode** — relaunch Figma with remote debugging enabled on port 9222
+- **Desktop Bridge Plugin** — install a Figma plugin, no restart needed
 
 ## Requirements
 
